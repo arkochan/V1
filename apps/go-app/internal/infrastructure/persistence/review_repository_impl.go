@@ -26,6 +26,16 @@ func (r *ReviewRepositoryImpl) GetByID(ctx context.Context, id int64) (*entity.R
 	return nil, nil
 }
 
+func (r *ReviewRepositoryImpl) Update(ctx context.Context, review *entity.Review) error {
+	// This will be implemented with sqlc generated code
+	return nil
+}
+
+func (r *ReviewRepositoryImpl) Delete(ctx context.Context, id int64) error {
+	// This will be implemented with sqlc generated code
+	return nil
+}
+
 func (r *ReviewRepositoryImpl) List(ctx context.Context, offset, limit int) ([]*entity.Review, error) {
 	// This will be implemented with sqlc generated code
 	return nil, nil

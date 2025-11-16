@@ -10,20 +10,14 @@ import (
 )
 
 type ReviewHandler struct {
-	createReviewUseCase interfaces.CreateReview
-	getReviewUseCase    interfaces.GetReview
-	listReviewsUseCase  interfaces.ListReviews
+	reviewUseCase interfaces.ReviewUseCase
 }
 
 func NewReviewHandler(
-	createReviewUseCase interfaces.CreateReview,
-	getReviewUseCase interfaces.GetReview,
-	listReviewsUseCase interfaces.ListReviews,
+	reviewUseCase interfaces.ReviewUseCase,
 ) *ReviewHandler {
 	return &ReviewHandler{
-		createReviewUseCase: createReviewUseCase,
-		getReviewUseCase:    getReviewUseCase,
-		listReviewsUseCase:  listReviewsUseCase,
+		reviewUseCase: reviewUseCase,
 	}
 }
 
@@ -44,7 +38,7 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		return
 	}
 
-	if err := h.createReviewUseCase.Execute(c.Request.Context(), reviewDTO); err != nil {
+	if err := h.reviewUseCase.Create(c.Request.Context(), reviewDTO); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -68,13 +62,71 @@ func (h *ReviewHandler) GetReview(c *gin.Context) {
 		return
 	}
 
-	review, err := h.getReviewUseCase.Execute(c.Request.Context(), id)
+	review, err := h.reviewUseCase.Retrieve(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, review)
+}
+
+// @Summary Update a review by ID
+// @Description Update a single review by its ID
+// @Tags reviews
+// @Accept json
+// @Produce  json
+// @Param id path int true "Review ID"
+// @Param review body dto.UpdateReviewDTO true "Update Review"
+// @Success 200 {object} nil
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Router /v1/reviews/{id} [put]
+func (h *ReviewHandler) UpdateReview(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid review ID"})
+		return
+	}
+
+	var reviewDTO dto.UpdateReviewDTO
+	if err := c.ShouldBindJSON(&reviewDTO); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.reviewUseCase.Update(c.Request.Context(), id, reviewDTO)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+// @Summary Delete a review by ID
+// @Description Delete a single review by its ID
+// @Tags reviews
+// @Produce  json
+// @Param id path int true "Review ID"
+// @Success 204 {object} nil
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Router /v1/reviews/{id} [delete]
+func (h *ReviewHandler) DeleteReview(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid review ID"})
+		return
+	}
+
+	err = h.reviewUseCase.Delete(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary List reviews
@@ -90,7 +142,7 @@ func (h *ReviewHandler) ListReviews(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-	reviews, err := h.listReviewsUseCase.Execute(c.Request.Context(), offset, limit)
+	reviews, err := h.reviewUseCase.List(c.Request.Context(), offset, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -27,16 +27,12 @@ func SetupRouter(db *pgxpool.Pool, logger *zerolog.Logger) *gin.Engine {
 	reviewRepo := persistence.NewReviewRepositoryImpl(db)
 
 	// Use Cases
-	createReviewUseCase := usecase.NewCreateReviewUseCase(reviewRepo)
-	getReviewUseCase := usecase.NewGetReviewUseCase(reviewRepo)
-	listReviewsUseCase := usecase.NewListReviewsUseCase(reviewRepo)
+	reviewUseCase := usecase.NewReviewUseCaseImpl(reviewRepo)
 
 	// Handlers
 	healthHandler := handler.NewHealthHandler()
 	reviewHandler := handler.NewReviewHandler(
-		createReviewUseCase,
-		getReviewUseCase,
-		listReviewsUseCase,
+		reviewUseCase,
 	)
 
 	// Routes
@@ -49,6 +45,8 @@ func SetupRouter(db *pgxpool.Pool, logger *zerolog.Logger) *gin.Engine {
 		{
 			reviews.POST("", reviewHandler.CreateReview)
 			reviews.GET("/:id", reviewHandler.GetReview)
+			reviews.PUT("/:id", reviewHandler.UpdateReview)
+			reviews.DELETE("/:id", reviewHandler.DeleteReview)
 			reviews.GET("", reviewHandler.ListReviews)
 		}
 	}

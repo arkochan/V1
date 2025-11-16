@@ -5,14 +5,11 @@ import (
 	"user-review-ingest/internal/application/dto"
 )
 
-type CreateReview interface {
-	Execute(ctx context.Context, reviewDTO dto.CreateReviewDTO) error
-}
-
-type GetReview interface {
-	Execute(ctx context.Context, id int64) (*dto.ReviewDTO, error)
-}
-
-type ListReviews interface {
-	Execute(ctx context.Context, offset, limit int) ([]*dto.ReviewDTO, error)
+// ReviewUseCase defines the interface for review operations with CRUD methods
+type ReviewUseCase interface {
+	Create(ctx context.Context, reviewDTO dto.CreateReviewDTO) error
+	Retrieve(ctx context.Context, id int64) (*dto.ReviewDTO, error)
+	Update(ctx context.Context, id int64, reviewDTO dto.UpdateReviewDTO) error
+	Delete(ctx context.Context, id int64) error
+	List(ctx context.Context, offset, limit int) ([]*dto.ReviewDTO, error)
 }

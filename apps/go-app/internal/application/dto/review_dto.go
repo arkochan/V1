@@ -7,6 +7,11 @@ type CreateReviewDTO struct {
 	Comment   string `json:"comment"`
 }
 
+type UpdateReviewDTO struct {
+	Rating  *int    `json:"rating,omitempty" binding:"min=1,max=5"`
+	Comment *string `json:"comment,omitempty"`
+}
+
 type ReviewDTO struct {
 	ID        int64  `json:"id"`
 	UserID    int64  `json:"user_id"`
@@ -14,4 +19,7 @@ type ReviewDTO struct {
 	Rating    int    `json:"rating"`
 	Comment   string `json:"comment"`
 	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at,omitempty"`
+	CreatedBy string `json:"created_by,omitempty"`
 }
+

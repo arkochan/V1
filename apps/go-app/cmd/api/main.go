@@ -7,8 +7,8 @@ import (
 	_ "user-review-ingest/docs" // <-- import generated docs package
 	"user-review-ingest/internal/infrastructure/config"
 	"user-review-ingest/internal/infrastructure/database"
+	"user-review-ingest/internal/infrastructure/http/router"
 	"user-review-ingest/internal/infrastructure/observability"
-	"user-review-ingest/internal/interfaces/http"
 )
 
 // @title User Review Ingest API
@@ -53,3 +53,4 @@ func main() {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
+
