@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+##############################################
+# Load .env variables for this script's shell
+##############################################
+load_env() {
+  if [[ -f ".env" ]]; then
+    echo "🔧 Loading .env for launcher script..."
+    set -a
+    # shellcheck source=/dev/null
+    source .env
+    set +a
+  else
+    echo "⚠️  .env file not found in launcher, continuing without it."
+  fi
+}
+
+##############################################
+# Open service in a new terminal
+##############################################
+launch_terminal_app() {
+  local title="$1"
+  local command="$2"
+
+  # Prepare env loading command for the new shell
+  local env_loader=""
+  if [[ -f ".env" ]]; then
+    env_loader="set -a; source .env; set +a;"
+  fi
+
+  # Full command to run in new shell
+  local full_command="trap '' SIGINT; ${env_loader} ${command}; echo ''; echo '⌛ Process stopped. Press Ctrl+D or close window.'; exec \$SHELL"
+
+  # macOS
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    osascript <<EOF &
+tell application "Terminal"
+  do script "printf '\e]0;$title\a'; $full_command"
+end tell
+EOF
+    return
+  fi
+
+  # Linux - try various terminal emulators
+  if command -v x-terminal-emulator >/dev/null 2>&1; then
+    x-terminal-emulator -T "$title" -e bash -c "$full_command" &
+    return
+  fi
+
+  if command -v gnome-terminal >/dev/null 2>&1; then
+    gnome-terminal --title="$title" -- bash -c "$full_command" &
+    return
+  fi
+
+  if command -v kitty >/dev/null 2>&1; then
+    kitty --title="$title" -e bash -c "$full_command" &
+    return
+  fi
+
+  if command -v alacritty >/dev/null 2>&1; then
+    alacritty --title "$title" -e bash -c "$full_command" &
+    return
+  fi
+
+  echo "⚠️  No terminal emulator found — running inline."
+  bash -c "$full_command"
+}
+
+##############################################
+# Run Go backend
+##############################################
+run_go() {
+  launch_terminal_app "Go Backend" "cd apps/go-app && echo \"🔗 DATABASE_URL: \$DATABASE_URL\" && make dev"
+}
+
+##############################################
+# Run Next.js frontend
+##############################################
+run_next() {
+  launch_terminal_app "Next.js Frontend" "cd apps/next-app && bun run dev"
+}
+
+##############################################
+# Docker commands
+##############################################
+docker_up_dev() {
+  echo "🐳 Starting Docker dev environment..."
+  docker compose -f docker-compose.dev.yml up -d
+}
+
+docker_down_dev() {
+  echo "🐳 Stopping Docker dev environment..."
+  docker compose -f docker-compose.dev.yml down
+}
+
+docker_up_prod() {
+  echo "🚀 Starting Docker prod environment..."
+  docker compose -f docker-compose.prod.yml up -d
+}
+
+docker_down_prod() {
+  echo "🛑 Stopping Docker prod environment..."
+  docker compose -f docker-compose.prod.yml down
+}
+
+##############################################
+# Main dispatcher
+##############################################
+main() {
+  load_env # Load env for this script's context (if needed)
+
+  case "${1:-}" in
+  go)
+    run_go
+    wait
+    ;;
+  next)
+    run_next
+    wait
+    ;;
+  dev)
+    run_go
+    run_next
+    wait
+    ;;
+  up)
+    docker_up_dev
+    ;;
+  down)
+    docker_down_dev
+    ;;
+  prod-up)
+    docker_up_prod
+    ;;
+  prod-down)
+    docker_down_prod
+    ;;
+  *)
+    echo "Usage: ./dev.sh {dev|go|next|up|down|prod-up|prod-down}"
+    exit 1
+    ;;
+  esac
+}
+
+main "$@"

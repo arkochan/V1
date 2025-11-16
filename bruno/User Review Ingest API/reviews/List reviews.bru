@@ -1,0 +1,16 @@
+meta {
+  name: List reviews
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/reviews
+  body: none
+  auth: none
+}
+
+params:query {
+  ~offset: 
+  ~limit: 
+}

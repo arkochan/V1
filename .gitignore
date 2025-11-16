@@ -1,0 +1,71 @@
+# Dependency directories
+node_modules/
+vendor/
+third_party/
+
+# Environment specific files
+.env
+.env.local
+.env.dev
+.env.test
+.env.prod
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Temporary folders
+tmp/
+temp/
+dist/
+build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Compiled binary, source map (especially for web projects)
+*.map
+
+# Docker build artifacts
+.docker/
+
+# Local development specific files
+.local/
+
+# Database files
+*.db
+*.db-journal
+
+# GitPod related
+.gitpod/
+.gitpod.yml
+
+# Other common ignores
+.DS_Store
+*.tmp
+*.backup

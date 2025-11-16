@@ -1,0 +1,67 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.pyc
+*.pyo
+*.o
+*.out
+
+# Go build artifacts
+*.a
+*.test
+*.prof
+*.db
+
+# Go workspace
+go.work.sum
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Project-specific build outputs
+/bin/
+/dist/
+/build/
+
+# Dependency directories (if not using Go modules)
+_vendor/
+_deps/
+
+# Environment specific files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage.out
+coverage.html
+
+# Tools
+tools/vendor/
+
+# Docker build artifacts
+.docker/
+
+# Temporary files
+tmp/
+*.tmp

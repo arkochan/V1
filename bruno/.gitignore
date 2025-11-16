@@ -1,0 +1,29 @@
+# Bruno collections - ignore sensitive data and local configurations
+**/env.json
+**/environments/
+**/.bruno/
+**/local/
+
+# Local settings that shouldn't be committed
+**/settings.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+*.tmp
+*.temp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

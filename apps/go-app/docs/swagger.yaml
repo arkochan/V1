@@ -1,0 +1,136 @@
+basePath: /
+definitions:
+  dto.CreateReviewDTO:
+    properties:
+      comment:
+        type: string
+      product_id:
+        type: integer
+      rating:
+        maximum: 5
+        minimum: 1
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - product_id
+    - rating
+    - user_id
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dto.ReviewDTO:
+    properties:
+      comment:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      product_id:
+        type: integer
+      rating:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for a user review ingestion service.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: User Review Ingest API
+  version: "1.0"
+paths:
+  /v1/reviews:
+    get:
+      description: Get a list of reviews with optional pagination
+      parameters:
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.ReviewDTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: List reviews
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      description: Create a new review with the input payload
+      parameters:
+      - description: Create Review
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateReviewDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Create a new review
+      tags:
+      - reviews
+  /v1/reviews/{id}:
+    get:
+      description: Get a single review by its ID
+      parameters:
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ReviewDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get a review by ID
+      tags:
+      - reviews
+swagger: "2.0"
