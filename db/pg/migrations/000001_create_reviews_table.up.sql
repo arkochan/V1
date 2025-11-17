@@ -1,4 +1,3 @@
--- +goose Up
 CREATE TABLE reviews (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -10,6 +9,3 @@ CREATE TABLE reviews (
     deleted_at TIMESTAMPTZ,
     created_by VARCHAR(255)
 );
-
--- +goose Down
-DROP TABLE reviews;
