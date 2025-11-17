@@ -17,6 +17,8 @@ import termios
 import tty
 import datetime
 from typing import Optional, Dict, List
+import argparse
+
 
 # ANSI Color Codes
 RESET = "\033[0m"
@@ -256,7 +258,7 @@ class ServiceManager:
 class TUI:
     """Terminal User Interface for service management."""
 
-    def __init__(self):
+    def __init__(self, go_enabled=True, next_enabled=True):
         # Parse .env file with variable expansion
         self.parsed_env = load_dotenv(".env")
 
@@ -269,22 +271,28 @@ class TUI:
                 f"{SYSTEM_COLOR}[system]{RESET} {DIM}No .env file found or empty{RESET}"
             )
 
-        # Create services with parsed environment variables
-        self.go_service = ServiceManager(
-            name="Go",
-            cmd=["make", "dev"],
-            cwd="apps/go-app",
-            color=GO_COLOR,
-            env=self.parsed_env,  # All parsed env vars available to Go
-        )
+        # Create services based on arguments
+        self.services = {}
+        self.go_enabled = go_enabled
+        self.next_enabled = next_enabled
 
-        self.next_service = ServiceManager(
-            name="Next.js",
-            cmd=["bun", "run", "dev"],
-            cwd="apps/next-app",
-            color=NEXT_COLOR,
-            env=self.parsed_env,  # All parsed env vars available to Next.js
-        )
+        if go_enabled:
+            self.services["go"] = ServiceManager(
+                name="Go",
+                cmd=["make", "dev"],
+                cwd="apps/go-app",
+                color=GO_COLOR,
+                env=self.parsed_env,  # All parsed env vars available to Go
+            )
+
+        if next_enabled:
+            self.services["next"] = ServiceManager(
+                name="Next.js",
+                cmd=["bun", "run", "dev"],
+                cwd="apps/next-app",
+                color=NEXT_COLOR,
+                env=self.parsed_env,  # All parsed env vars available to Next.js
+            )
 
         self.last_key = ""
         self.last_key_time = 0.0
@@ -309,29 +317,44 @@ class TUI:
         print(
             f"{BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}"
         )
-        print(f"{BOLD}  Go Backend: {RESET}", end="")
 
-        symbols = {
-            "running": f"{GO_COLOR}●{RESET} running  ",
-            "starting": f"{SYSTEM_COLOR}◐{RESET} starting ",
-            "stopped": f"{ERROR_COLOR}○{RESET} stopped  ",
-            "restarting": f"{SYSTEM_COLOR}↻{RESET} restarting ",
-        }
-        print(symbols.get(self.go_service.status, "unknown "), end="")
+        # Print Go status if enabled
+        if self.go_enabled:
+            print(f"{BOLD}  Go Backend: {RESET}", end="")
+            symbols = {
+                "running": f"{GO_COLOR}●{RESET} running  ",
+                "starting": f"{SYSTEM_COLOR}◐{RESET} starting ",
+                "stopped": f"{ERROR_COLOR}○{RESET} stopped  ",
+                "restarting": f"{SYSTEM_COLOR}↻{RESET} restarting ",
+            }
+            go_status = self.services["go"].status
+            print(symbols.get(go_status, "unknown "), end="")
 
-        print(f"{BOLD}Next.js: {RESET}", end="")
+        # Print Next status if enabled
+        if self.next_enabled:
+            print(f"{BOLD}Next.js: {RESET}", end="")
+            symbols = {
+                "running": f"{NEXT_COLOR}●{RESET} running",
+                "starting": f"{SYSTEM_COLOR}◐{RESET} starting",
+                "stopped": f"{ERROR_COLOR}○{RESET} stopped",
+                "restarting": f"{SYSTEM_COLOR}↻{RESET} restarting",
+            }
+            next_status = self.services["next"].status
+            print(symbols.get(next_status, "unknown"))
 
-        symbols = {
-            "running": f"{NEXT_COLOR}●{RESET} running",
-            "starting": f"{SYSTEM_COLOR}◐{RESET} starting",
-            "stopped": f"{ERROR_COLOR}○{RESET} stopped",
-            "restarting": f"{SYSTEM_COLOR}↻{RESET} restarting",
-        }
-        print(symbols.get(self.next_service.status, "unknown"))
+        # Print controls based on which services are enabled
+        controls = []
+        if self.go_enabled and self.next_enabled:
+            controls.append("g→r: restart Go")
+            controls.append("n→r: restart Next")
+            controls.append("r: restart all")
+        elif self.go_enabled:
+            controls.append("g→r: restart Go")
+        elif self.next_enabled:
+            controls.append("n→r: restart Next")
 
-        print(
-            f"{DIM}  Ctrl+C: quit  |  g→r: restart Go  |  n→r: restart Next  |  r: restart all{RESET}"
-        )
+        controls.append("Ctrl+C: quit")
+        print(f"{DIM}  {'  |  '.join(controls)}{RESET}")
         print(
             f"{BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}"
         )
@@ -349,32 +372,36 @@ class TUI:
 
             chord = self.last_key + char
 
-            if chord == "gr":
+            if chord == "gr" and self.go_enabled:
                 self.last_key = ""
                 print("\033[2J\033[H")  # Clear screen
                 self.print_header()
-                self.go_service.restart()
-            elif chord == "nr":
+                self.services["go"].restart()
+            elif chord == "nr" and self.next_enabled:
                 self.last_key = ""
                 print("\033[2J\033[H")
                 self.print_header()
-                self.next_service.restart()
+                self.services["next"].restart()
             elif chord == "r" and not self.last_key:
                 self.last_key = ""
                 print("\033[2J\033[H")
                 self.print_header()
                 self.restart_all()
             elif char in ("g", "n"):
-                self.last_key = char
-                self.last_key_time = current_time
+                # Only accept if the corresponding service is enabled
+                if (char == "g" and self.go_enabled) or (
+                    char == "n" and self.next_enabled
+                ):
+                    self.last_key = char
+                    self.last_key_time = current_time
             else:
                 self.last_key = ""
 
     def restart_all(self) -> None:
         """Restart both services."""
         print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Restarting all services...{RESET}")
-        self.go_service.restart()
-        self.next_service.restart()
+        for service in self.services.values():
+            service.restart()
         print(f"{SYSTEM_COLOR}[system]{RESET} {DIM}All services restarted{RESET}")
         sys.stdout.flush()
 
@@ -387,8 +414,8 @@ class TUI:
         print()
         print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Shutting down...{RESET}")
 
-        self.go_service.stop()
-        self.next_service.stop()
+        for service in self.services.values():
+            service.stop()
 
         self.restore_terminal()
         time.sleep(0.1)  # Ensure terminal is fully restored
@@ -414,27 +441,21 @@ class TUI:
         self.print_header()
 
         print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting services...{RESET}")
-        self.go_service.start()
-        self.next_service.start()
+        for service in self.services.values():
+            service.start()
 
         try:
             while not self.shutting_down:
                 self.handle_input()
 
                 # Health monitoring
-                if self.go_service.status == "running" and self.go_service.process:
-                    if self.go_service.process.poll() is not None:
-                        self.go_service.status = "stopped"
-                        print(
-                            f"{ERROR_COLOR}[system]{RESET} Go backend stopped unexpectedly"
-                        )
-
-                if self.next_service.status == "running" and self.next_service.process:
-                    if self.next_service.process.poll() is not None:
-                        self.next_service.status = "stopped"
-                        print(
-                            f"{ERROR_COLOR}[system]{RESET} Next.js stopped unexpectedly"
-                        )
+                for name, service in self.services.items():
+                    if service.status == "running" and service.process:
+                        if service.process.poll() is not None:
+                            service.status = "stopped"
+                            print(
+                                f"{ERROR_COLOR}[system]{RESET} {service.name} stopped unexpectedly"
+                            )
 
                 time.sleep(0.1)
         finally:
@@ -476,39 +497,235 @@ def docker_down_prod():
     )
 
 
-def print_usage():
-    """Print usage instructions."""
-    print("Usage: ./dev.py {dev|tui|up|down|prod-up|prod-down}")
-    print()
-    print("  dev/tui     - Start TUI development environment")
-    print("  up          - Start Docker dev environment")
-    print("  down        - Stop Docker dev environment")
-    print("  prod-up     - Start Docker prod environment")
-    print("  prod-down   - Stop Docker prod environment")
-    sys.exit(1)
+def run_migrate(args):
+    """Run migration command with parsed environment variables."""
+    parsed_env = load_dotenv(".env")
+
+    if args.subcommand == "create":
+        # Special handling for migrate create command
+        # Use fixed path as specified: /home/arkochan/Repositories/V1/db/pg/migrations
+        migrations_dir = "/home/arkochan/Repositories/V1/db/pg/migrations"
+        
+        # Build the migrate create command with specific parameters
+        cmd = ["migrate", "create", "-ext", "sql", "-dir", migrations_dir, "-seq", args.file_name]
+
+        print(
+            f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running migration create: {' '.join(cmd)}{RESET}"
+        )
+
+        try:
+            result = subprocess.run(cmd, check=True)
+            print(f"{SYSTEM_COLOR}[system]{RESET} Migration created successfully")
+        except subprocess.CalledProcessError as e:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} Migration create failed with exit code {e.returncode}"
+            )
+            sys.exit(e.returncode)
+        except FileNotFoundError:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} migrate command not found. Make sure migrate is installed."
+            )
+            sys.exit(1)
+    else:
+        # Get migration source and database URL from environment for other commands
+        migrations_source = parsed_env.get("MIGRATIONS")
+        database_url = parsed_env.get("DATABASE_URL")
+
+        if not migrations_source:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} MIGRATIONS environment variable not found in .env"
+            )
+            sys.exit(1)
+        if not database_url:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} DATABASE_URL environment variable not found in .env"
+            )
+            sys.exit(1)
+
+        # Build the migrate command
+        cmd = ["migrate", "-path", migrations_source, "-database", database_url]
+
+        # Add the subcommand and any additional arguments
+        if args.subcommand == "version":
+            cmd.extend([args.subcommand] + getattr(args, 'additional_args', []))
+        else:
+            cmd.extend([args.subcommand] + getattr(args, 'additional_args', []))
+
+        print(
+            f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running migration: {' '.join(cmd)}{RESET}"
+        )
+
+        try:
+            result = subprocess.run(cmd, cwd=migrations_source, check=True)
+            print(f"{SYSTEM_COLOR}[system]{RESET} Migration completed successfully")
+        except subprocess.CalledProcessError as e:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} Migration failed with exit code {e.returncode}"
+            )
+            sys.exit(e.returncode)
+        except FileNotFoundError:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} migrate command not found. Make sure migrate is installed."
+            )
+            sys.exit(1)
 
 
 def main():
     """Main command dispatcher."""
-    if len(sys.argv) < 2:
-        print_usage()
+    parser = argparse.ArgumentParser(description="Development environment manager")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    command = sys.argv[1]
+    # TUI subcommands
+    tui_parser = subparsers.add_parser("tui", help="Start TUI development environment")
+    tui_group = tui_parser.add_mutually_exclusive_group()
+    tui_group.add_argument("--go", action="store_true", help="Only start Go service")
+    tui_group.add_argument(
+        "--next", action="store_true", help="Only start Next.js service"
+    )
+    tui_group.add_argument(
+        "--dev", action="store_true", help="Start both services (default)"
+    )
+
+    # Dev command (alias for TUI)
+    dev_parser = subparsers.add_parser("dev", help="Start development environment")
+    dev_group = dev_parser.add_mutually_exclusive_group()
+    dev_group.add_argument("--go", action="store_true", help="Only start Go service")
+    dev_group.add_argument(
+        "--next", action="store_true", help="Only start Next.js service"
+    )
+    dev_group.add_argument(
+        "--dev", action="store_true", help="Start both services (default)"
+    )
+
+    # Simple go command to start only Go service
+    subparsers.add_parser("go", help="Start only Go service")
+    
+    # Simple next command to start only Next.js service
+    subparsers.add_parser("next", help="Start only Next.js service")
+
+    # Docker commands
+    subparsers.add_parser("up", help="Start Docker dev environment")
+    subparsers.add_parser("down", help="Stop Docker dev environment")
+    subparsers.add_parser("prod-up", help="Start Docker prod environment")
+    subparsers.add_parser("prod-down", help="Stop Docker prod environment")
+
+    # Migration command
+    migrate_parser = subparsers.add_parser("migrate", help="Run database migrations")
+    migrate_subparsers = migrate_parser.add_subparsers(
+        dest="subcommand", help="Migration subcommands"
+    )
+
+    # Add subcommands for migrate
+    migrate_up = migrate_subparsers.add_parser("up", help="Apply migrations")
+    migrate_up.add_argument(
+        "additional_args", nargs="*", help="Additional arguments for up command"
+    )
+
+    migrate_down = migrate_subparsers.add_parser("down", help="Rollback migrations")
+    migrate_down.add_argument(
+        "additional_args", nargs="*", help="Additional arguments for down command"
+    )
+
+    migrate_create = migrate_subparsers.add_parser("create", help="Create new migration")
+    migrate_create.add_argument("file_name", help="Name for the new migration file")
+
+    migrate_drop = migrate_subparsers.add_parser("drop", help="Drop all migrations")
+    migrate_drop.add_argument(
+        "additional_args", nargs="*", help="Additional arguments for drop command"
+    )
+
+    migrate_force = migrate_subparsers.add_parser("force", help="Force version")
+    migrate_force.add_argument(
+        "additional_args", nargs="*", help="Additional arguments for force command"
+    )
+
+    migrate_version = migrate_subparsers.add_parser(
+        "version", help="Get migration version"
+    )
+    migrate_version.add_argument(
+        "additional_args", nargs="*", help="Additional arguments for version command"
+    )
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        sys.exit(1)
 
     try:
-        if command in ("dev", "tui"):
-            tui = TUI()
+        if args.command in ("dev", "tui"):
+            # Determine which services to enable
+            go_enabled = getattr(args, "go", False) or not (
+                getattr(args, "next", False)
+            )
+            next_enabled = getattr(args, "next", False) or not (
+                getattr(args, "go", False)
+            )
+
+            tui = TUI(go_enabled=go_enabled, next_enabled=next_enabled)
             tui.run()
-        elif command == "up":
+        elif args.command == "go":
+            # Start only the Go service without TUI
+            parsed_env = load_dotenv(".env")
+            go_service = ServiceManager(
+                name="Go",
+                cmd=["make", "dev"],
+                cwd="apps/go-app",
+                color=GO_COLOR,
+                env=parsed_env,
+            )
+            print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting Go service...{RESET}")
+            if go_service.start():
+                print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Go service started. Press Ctrl+C to stop.{RESET}")
+                try:
+                    while True:
+                        time.sleep(1)
+                        if go_service.process and go_service.process.poll() is not None:
+                            print(f"{ERROR_COLOR}[system]{RESET} Go service stopped unexpectedly")
+                            break
+                except KeyboardInterrupt:
+                    print(f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Go service...{RESET}")
+                    go_service.stop()
+                    print(f"{SYSTEM_COLOR}[system]{RESET} {DIM}Go service stopped.{RESET}")
+        elif args.command == "next":
+            # Start only the Next.js service without TUI
+            parsed_env = load_dotenv(".env")
+            next_service = ServiceManager(
+                name="Next.js",
+                cmd=["bun", "run", "dev"],
+                cwd="apps/next-app",
+                color=NEXT_COLOR,
+                env=parsed_env,
+            )
+            print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting Next.js service...{RESET}")
+            if next_service.start():
+                print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Next.js service started. Press Ctrl+C to stop.{RESET}")
+                try:
+                    while True:
+                        time.sleep(1)
+                        if next_service.process and next_service.process.poll() is not None:
+                            print(f"{ERROR_COLOR}[system]{RESET} Next.js service stopped unexpectedly")
+                            break
+                except KeyboardInterrupt:
+                    print(f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Next.js service...{RESET}")
+                    next_service.stop()
+                    print(f"{SYSTEM_COLOR}[system]{RESET} {DIM}Next.js service stopped.{RESET}")
+        elif args.command == "up":
             docker_up_dev()
-        elif command == "down":
+        elif args.command == "down":
             docker_down_dev()
-        elif command == "prod-up":
+        elif args.command == "prod-up":
             docker_up_prod()
-        elif command == "prod-down":
+        elif args.command == "prod-down":
             docker_down_prod()
+        elif args.command == "migrate":
+            if not args.subcommand:
+                migrate_parser.print_help()
+                sys.exit(1)
+            run_migrate(args)
         else:
-            print_usage()
+            parser.print_help()
+            sys.exit(1)
     except KeyboardInterrupt:
         print("\nInterrupted by user")
         sys.exit(0)
