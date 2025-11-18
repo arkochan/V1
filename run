@@ -506,14 +506,16 @@ def run_migrate(args):
         # Use fixed path as specified: /home/arkochan/Repositories/V1/db/pg/migrations
         migrations_dir = "/home/arkochan/Repositories/V1/db/pg/migrations"
 
+        cwd = os.path.dirname(os.path.abspath(__file__))
         # Build the migrate create command with specific parameters
+        absolute_dir = os.path.join(cwd, migrations_dir)
         cmd = [
             "migrate",
             "create",
             "-ext",
             "sql",
             "-dir",
-            migrations_dir,
+            absolute_dir,
             "-seq",
             args.file_name,
         ]
@@ -551,8 +553,11 @@ def run_migrate(args):
             )
             sys.exit(1)
 
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        # Build the migrate create command with specific parameters
+        absolute_dir = os.path.join(cwd, migrations_source)
         # Build the migrate command
-        cmd = ["migrate", "-path", migrations_source, "-database", database_url]
+        cmd = ["migrate", "-path", absolute_dir, "-database", database_url]
 
         # Add the subcommand and any additional arguments
         if args.subcommand == "version":
