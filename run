@@ -505,9 +505,18 @@ def run_migrate(args):
         # Special handling for migrate create command
         # Use fixed path as specified: /home/arkochan/Repositories/V1/db/pg/migrations
         migrations_dir = "/home/arkochan/Repositories/V1/db/pg/migrations"
-        
+
         # Build the migrate create command with specific parameters
-        cmd = ["migrate", "create", "-ext", "sql", "-dir", migrations_dir, "-seq", args.file_name]
+        cmd = [
+            "migrate",
+            "create",
+            "-ext",
+            "sql",
+            "-dir",
+            migrations_dir,
+            "-seq",
+            args.file_name,
+        ]
 
         print(
             f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running migration create: {' '.join(cmd)}{RESET}"
@@ -547,9 +556,9 @@ def run_migrate(args):
 
         # Add the subcommand and any additional arguments
         if args.subcommand == "version":
-            cmd.extend([args.subcommand] + getattr(args, 'additional_args', []))
+            cmd.extend([args.subcommand] + getattr(args, "additional_args", []))
         else:
-            cmd.extend([args.subcommand] + getattr(args, 'additional_args', []))
+            cmd.extend([args.subcommand] + getattr(args, "additional_args", []))
 
         print(
             f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running migration: {' '.join(cmd)}{RESET}"
@@ -599,7 +608,7 @@ def main():
 
     # Simple go command to start only Go service
     subparsers.add_parser("go", help="Start only Go service")
-    
+
     # Simple next command to start only Next.js service
     subparsers.add_parser("next", help="Start only Next.js service")
 
@@ -626,7 +635,9 @@ def main():
         "additional_args", nargs="*", help="Additional arguments for down command"
     )
 
-    migrate_create = migrate_subparsers.add_parser("create", help="Create new migration")
+    migrate_create = migrate_subparsers.add_parser(
+        "create", help="Create new migration"
+    )
     migrate_create.add_argument("file_name", help="Name for the new migration file")
 
     migrate_drop = migrate_subparsers.add_parser("drop", help="Drop all migrations")
@@ -676,17 +687,25 @@ def main():
             )
             print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting Go service...{RESET}")
             if go_service.start():
-                print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Go service started. Press Ctrl+C to stop.{RESET}")
+                print(
+                    f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Go service started. Press Ctrl+C to stop.{RESET}"
+                )
                 try:
                     while True:
                         time.sleep(1)
                         if go_service.process and go_service.process.poll() is not None:
-                            print(f"{ERROR_COLOR}[system]{RESET} Go service stopped unexpectedly")
+                            print(
+                                f"{ERROR_COLOR}[system]{RESET} Go service stopped unexpectedly"
+                            )
                             break
                 except KeyboardInterrupt:
-                    print(f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Go service...{RESET}")
+                    print(
+                        f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Go service...{RESET}"
+                    )
                     go_service.stop()
-                    print(f"{SYSTEM_COLOR}[system]{RESET} {DIM}Go service stopped.{RESET}")
+                    print(
+                        f"{SYSTEM_COLOR}[system]{RESET} {DIM}Go service stopped.{RESET}"
+                    )
         elif args.command == "next":
             # Start only the Next.js service without TUI
             parsed_env = load_dotenv(".env")
@@ -697,19 +716,32 @@ def main():
                 color=NEXT_COLOR,
                 env=parsed_env,
             )
-            print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting Next.js service...{RESET}")
+            print(
+                f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting Next.js service...{RESET}"
+            )
             if next_service.start():
-                print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Next.js service started. Press Ctrl+C to stop.{RESET}")
+                print(
+                    f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Next.js service started. Press Ctrl+C to stop.{RESET}"
+                )
                 try:
                     while True:
                         time.sleep(1)
-                        if next_service.process and next_service.process.poll() is not None:
-                            print(f"{ERROR_COLOR}[system]{RESET} Next.js service stopped unexpectedly")
+                        if (
+                            next_service.process
+                            and next_service.process.poll() is not None
+                        ):
+                            print(
+                                f"{ERROR_COLOR}[system]{RESET} Next.js service stopped unexpectedly"
+                            )
                             break
                 except KeyboardInterrupt:
-                    print(f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Next.js service...{RESET}")
+                    print(
+                        f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Next.js service...{RESET}"
+                    )
                     next_service.stop()
-                    print(f"{SYSTEM_COLOR}[system]{RESET} {DIM}Next.js service stopped.{RESET}")
+                    print(
+                        f"{SYSTEM_COLOR}[system]{RESET} {DIM}Next.js service stopped.{RESET}"
+                    )
         elif args.command == "up":
             docker_up_dev()
         elif args.command == "down":
