@@ -19,6 +19,9 @@ cd V1
 # generate .env
 cp .env.example .env
 
+# init Conventional Commit
+bunx git-conventional-commits init
+
 # First make sure DB is up or run 
 ./run up
 
