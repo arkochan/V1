@@ -584,6 +584,51 @@ def run_migrate(args):
             sys.exit(1)
 
 
+def run_lint(args):
+    """Run linters for Go and Bun services."""
+    if args.subcommand == "go":
+        print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running Go linter...{RESET}")
+        try:
+            result = subprocess.run(
+                ["make", "lint"], 
+                cwd="apps/go-app", 
+                check=True
+            )
+            print(f"{SYSTEM_COLOR}[system]{RESET} Go lint completed successfully")
+        except subprocess.CalledProcessError as e:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} Go lint failed with exit code {e.returncode}"
+            )
+            sys.exit(e.returncode)
+        except FileNotFoundError:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} make command not found or Makefile doesn't exist in apps/go-app"
+            )
+            sys.exit(1)
+    elif args.subcommand == "bun":
+        print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running Bun linter...{RESET}")
+        try:
+            result = subprocess.run(
+                ["bun", "lint"], 
+                cwd="apps/next-app", 
+                check=True
+            )
+            print(f"{SYSTEM_COLOR}[system]{RESET} Bun lint completed successfully")
+        except subprocess.CalledProcessError as e:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} Bun lint failed with exit code {e.returncode}"
+            )
+            sys.exit(e.returncode)
+        except FileNotFoundError:
+            print(
+                f"{ERROR_COLOR}[error]{RESET} bun command not found or lint script doesn't exist in apps/next-app"
+            )
+            sys.exit(1)
+    else:
+        print(f"{ERROR_COLOR}[error]{RESET} Please specify a linter: go or bun")
+        sys.exit(1)
+
+
 def main():
     """Main command dispatcher."""
     parser = argparse.ArgumentParser(description="Development environment manager")
@@ -661,6 +706,16 @@ def main():
     migrate_version.add_argument(
         "additional_args", nargs="*", help="Additional arguments for version command"
     )
+
+    # Lint command
+    lint_parser = subparsers.add_parser("lint", help="Run linters")
+    lint_subparsers = lint_parser.add_subparsers(
+        dest="subcommand", help="Lint subcommands"
+    )
+
+    # Add subcommands for lint
+    lint_go = lint_subparsers.add_parser("go", help="Run Go linter")
+    lint_bun = lint_subparsers.add_parser("bun", help="Run Bun linter")
 
     args = parser.parse_args()
 
@@ -760,6 +815,11 @@ def main():
                 migrate_parser.print_help()
                 sys.exit(1)
             run_migrate(args)
+        elif args.command == "lint":
+            if not args.subcommand:
+                print("Usage: ./run lint [go|bun]")
+                sys.exit(1)
+            run_lint(args)
         else:
             parser.print_help()
             sys.exit(1)
