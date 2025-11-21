@@ -6,14 +6,26 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	CreateAuthUser(ctx context.Context, arg CreateAuthUserParams) (Auth, error)
+	CreateOAuthProvider(ctx context.Context, arg CreateOAuthProviderParams) (CreateOAuthProviderRow, error)
 	CreateReview(ctx context.Context, arg CreateReviewParams) (Review, error)
+	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
 	DeleteReview(ctx context.Context, id int64) error
+	GetAuthUserByEmail(ctx context.Context, email pgtype.Text) (Auth, error)
+	GetAuthUserByID(ctx context.Context, id pgtype.UUID) (Auth, error)
+	GetOAuthProviderByProviderID(ctx context.Context, arg GetOAuthProviderByProviderIDParams) (GetOAuthProviderByProviderIDRow, error)
 	GetReview(ctx context.Context, id int64) (Review, error)
+	GetUserProfileByEmail(ctx context.Context, email string) (UserProfile, error)
 	ListReviews(ctx context.Context, arg ListReviewsParams) ([]Review, error)
+	UpdateAuthUser(ctx context.Context, arg UpdateAuthUserParams) (Auth, error)
+	UpdateOAuthProvider(ctx context.Context, arg UpdateOAuthProviderParams) (UpdateOAuthProviderRow, error)
 	UpdateReview(ctx context.Context, arg UpdateReviewParams) (Review, error)
+	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error)
 }
 
 var _ Querier = (*Queries)(nil)

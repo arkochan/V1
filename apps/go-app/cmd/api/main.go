@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	_ "user-review-ingest/docs" // <-- import generated docs package
 	"user-review-ingest/internal/infrastructure/config"
@@ -36,7 +35,7 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to load configuration")
 	}
 
-	// Initialize database connection
+	// Initialize database
 	db, err := database.NewPostgresConnection(cfg.DatabaseURL)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to connect to database")
@@ -44,13 +43,12 @@ func main() {
 	defer db.Close()
 
 	// Setup router
-	r := router.SetupRouter(db, logger)
+	r := router.SetupRouter(db, logger, cfg)
 
 	// Start server
-	serverAddr := fmt.Sprintf(":%d", cfg.Port)
-	logger.Info().Msgf("Server listening on %s", serverAddr)
-	if err := http.ListenAndServe(serverAddr, r); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	logger.Info().Msgf("Server starting on %s", addr)
+	if err := http.ListenAndServe(addr, r); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to start server")
 	}
 }
-

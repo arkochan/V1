@@ -115,4 +115,3 @@ func (r *ReviewRepositoryImpl) List(ctx context.Context, offset, limit int) ([]*
 	}
 	return result, nil
 }
-

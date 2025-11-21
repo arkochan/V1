@@ -12,4 +12,3 @@ type ReviewRepository interface {
 	Delete(ctx context.Context, id int64) error
 	List(ctx context.Context, offset, limit int) ([]*entity.Review, error)
 }
-

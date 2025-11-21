@@ -8,6 +8,31 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Auth struct {
+	ID           pgtype.UUID        `json:"id"`
+	Email        pgtype.Text        `json:"email"`
+	PasswordHash pgtype.Text        `json:"passwordHash"`
+	Status       string             `json:"status"`
+	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt    pgtype.Timestamptz `json:"updatedAt"`
+	DeletedAt    pgtype.Timestamptz `json:"deletedAt"`
+}
+
+type OauthProvider struct {
+	ID             pgtype.UUID        `json:"id"`
+	UserID         pgtype.UUID        `json:"userId"`
+	ProviderName   string             `json:"providerName"`
+	ProviderUserID string             `json:"providerUserId"`
+	Email          pgtype.Text        `json:"email"`
+	Name           pgtype.Text        `json:"name"`
+	AccessToken    pgtype.Text        `json:"accessToken"`
+	RefreshToken   pgtype.Text        `json:"refreshToken"`
+	ExpiresAt      pgtype.Timestamptz `json:"expiresAt"`
+	Scopes         []string           `json:"scopes"`
+	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt      pgtype.Timestamptz `json:"updatedAt"`
+}
+
 type Review struct {
 	ID        int64              `json:"id"`
 	UserID    int64              `json:"userId"`
@@ -18,4 +43,12 @@ type Review struct {
 	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
 	DeletedAt pgtype.Timestamptz `json:"deletedAt"`
 	CreatedBy pgtype.Text        `json:"createdBy"`
+}
+
+type UserProfile struct {
+	ID        pgtype.UUID        `json:"id"`
+	Email     string             `json:"email"`
+	Name      pgtype.Text        `json:"name"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
 }
