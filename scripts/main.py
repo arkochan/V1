@@ -129,13 +129,10 @@ def main():
             # Start only the Go service without TUI
             from scripts.env_parser import load_dotenv
             from scripts.service_manager import ServiceManager
+            from scripts.loggers import log_system, log_simple_error, BOLD, DIM
 
             # ANSI Color Codes
             RESET = "\033[0m"
-            BOLD = "\033[1m"
-            DIM = "\033[2m"
-            SYSTEM_COLOR = "\033[38;5;214m"
-            ERROR_COLOR = "\033[38;5;196m"
             GO_COLOR = "\033[38;5;81m"
 
             parsed_env = load_dotenv(".env")
@@ -146,38 +143,28 @@ def main():
                 color=GO_COLOR,
                 env=parsed_env,
             )
-            print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting Go service...{RESET}")
+            log_system(f"{BOLD}Starting Go service...{RESET}")
             if go_service.start():
-                print(
-                    f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Go service started. Press Ctrl+C to stop.{RESET}"
-                )
+                log_system(f"{BOLD}Go service started. Press Ctrl+C to stop.{RESET}")
                 try:
                     while True:
                         time.sleep(1)
                         if go_service.process and go_service.process.poll() is not None:
-                            print(
-                                f"{ERROR_COLOR}[system]{RESET} Go service stopped unexpectedly"
-                            )
+                            log_simple_error("Go service stopped unexpectedly")
                             break
                 except KeyboardInterrupt:
-                    print(
-                        f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Go service...{RESET}"
-                    )
+                    print(f"\n", end="")
+                    log_system(f"{BOLD}Stopping Go service...{RESET}")
                     go_service.stop()
-                    print(
-                        f"{SYSTEM_COLOR}[system]{RESET} {DIM}Go service stopped.{RESET}"
-                    )
+                    log_system(f"{DIM}Go service stopped.{RESET}")
         elif args.command == "next":
             # Start only the Next.js service without TUI
             from scripts.env_parser import load_dotenv
             from scripts.service_manager import ServiceManager
+            from scripts.loggers import log_system, log_simple_error, BOLD, DIM
 
             # ANSI Color Codes
             RESET = "\033[0m"
-            BOLD = "\033[1m"
-            DIM = "\033[2m"
-            SYSTEM_COLOR = "\033[38;5;214m"
-            ERROR_COLOR = "\033[38;5;196m"
             NEXT_COLOR = "\033[38;5;120m"
 
             parsed_env = load_dotenv(".env")
@@ -188,13 +175,9 @@ def main():
                 color=NEXT_COLOR,
                 env=parsed_env,
             )
-            print(
-                f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting Next.js service...{RESET}"
-            )
+            log_system(f"{BOLD}Starting Next.js service...{RESET}")
             if next_service.start():
-                print(
-                    f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Next.js service started. Press Ctrl+C to stop.{RESET}"
-                )
+                log_system(f"{BOLD}Next.js service started. Press Ctrl+C to stop.{RESET}")
                 try:
                     while True:
                         time.sleep(1)
@@ -202,18 +185,13 @@ def main():
                             next_service.process
                             and next_service.process.poll() is not None
                         ):
-                            print(
-                                f"{ERROR_COLOR}[system]{RESET} Next.js service stopped unexpectedly"
-                            )
+                            log_simple_error("Next.js service stopped unexpectedly")
                             break
                 except KeyboardInterrupt:
-                    print(
-                        f"\n{SYSTEM_COLOR}[system]{RESET} {BOLD}Stopping Next.js service...{RESET}"
-                    )
+                    print(f"\n", end="")
+                    log_system(f"{BOLD}Stopping Next.js service...{RESET}")
                     next_service.stop()
-                    print(
-                        f"{SYSTEM_COLOR}[system]{RESET} {DIM}Next.js service stopped.{RESET}"
-                    )
+                    log_system(f"{DIM}Next.js service stopped.{RESET}")
         elif args.command == "up":
             from scripts.commands import docker_up_dev
             docker_up_dev()

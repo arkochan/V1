@@ -8,37 +8,31 @@ import sys
 import subprocess
 from typing import Any
 
-
-# ANSI Color Codes
-RESET = "\033[0m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-SYSTEM_COLOR = "\033[38;5;214m"
-ERROR_COLOR = "\033[38;5;196m"
+from scripts.loggers import log_system, log_simple_error, SYSTEM_COLOR, ERROR_COLOR, BOLD, RESET
 
 
 # Docker command functions
 def docker_up_dev():
     """Start Docker development environment."""
-    print("\n🐳 Starting Docker dev environment...")
+    log_system("🐳 Starting Docker dev environment...")
     subprocess.run(["docker", "compose", "-f", "docker-compose.dev.yml", "up", "-d"])
 
 
 def docker_down_dev():
     """Stop Docker development environment."""
-    print("\n🐳 Stopping Docker dev environment...")
+    log_system("🐳 Stopping Docker dev environment...")
     subprocess.run(["docker", "compose", "-f", "docker-compose.dev.yml", "down"])
 
 
 def docker_up_prod():
     """Start Docker production environment."""
-    print("\n🚀 Starting Docker prod environment...")
+    log_system("🚀 Starting Docker prod environment...")
     subprocess.run(["docker", "compose", "-f", "docker-compose.prod.yml", "up", "-d"])
 
 
 def docker_down_prod():
     """Stop Docker production environment."""
-    print("\n🛑 Stopping Docker prod environment...")
+    log_system("🛑 Stopping Docker prod environment...")
     subprocess.run(
         [
             "docker",
@@ -75,22 +69,16 @@ def run_migrate(args):
             args.file_name,
         ]
 
-        print(
-            f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running migration create: {' '.join(cmd)}{RESET}"
-        )
+        log_system(f"{BOLD}Running migration create: {' '.join(cmd)}{RESET}")
 
         try:
             result = subprocess.run(cmd, check=True)
-            print(f"{SYSTEM_COLOR}[system]{RESET} Migration created successfully")
+            log_system("Migration created successfully")
         except subprocess.CalledProcessError as e:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} Migration create failed with exit code {e.returncode}"
-            )
+            log_simple_error(f"Migration create failed with exit code {e.returncode}")
             sys.exit(e.returncode)
         except FileNotFoundError:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} migrate command not found. Make sure migrate is installed."
-            )
+            log_simple_error("migrate command not found. Make sure migrate is installed.")
             sys.exit(1)
     else:
         # Get migration source and database URL from environment for other commands
@@ -98,14 +86,10 @@ def run_migrate(args):
         database_url = parsed_env.get("DATABASE_URL")
 
         if not migrations_source:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} MIGRATIONS environment variable not found in .env"
-            )
+            log_simple_error("MIGRATIONS environment variable not found in .env")
             sys.exit(1)
         if not database_url:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} DATABASE_URL environment variable not found in .env"
-            )
+            log_simple_error("DATABASE_URL environment variable not found in .env")
             sys.exit(1)
 
         cwd = os.path.dirname(os.path.abspath(__file__))
@@ -120,59 +104,45 @@ def run_migrate(args):
         else:
             cmd.extend([args.subcommand] + getattr(args, "additional_args", []))
 
-        print(
-            f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running migration: {' '.join(cmd)}{RESET}"
-        )
+        log_system(f"{BOLD}Running migration: {' '.join(cmd)}{RESET}")
 
         try:
             result = subprocess.run(cmd, cwd=migrations_source, check=True)
-            print(f"{SYSTEM_COLOR}[system]{RESET} Migration completed successfully")
+            log_system("Migration completed successfully")
         except subprocess.CalledProcessError as e:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} Migration failed with exit code {e.returncode}"
-            )
+            log_simple_error(f"Migration failed with exit code {e.returncode}")
             sys.exit(e.returncode)
         except FileNotFoundError:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} migrate command not found. Make sure migrate is installed."
-            )
+            log_simple_error("migrate command not found. Make sure migrate is installed.")
             sys.exit(1)
 
 
 def run_lint(args):
     """Run linters for Go and Bun services."""
     if args.subcommand == "go":
-        print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running Go linter...{RESET}")
+        log_system(f"{BOLD}Running Go linter...{RESET}")
         try:
             result = subprocess.run(["make", "lint"], cwd="apps/go-app", check=True)
-            print(f"{SYSTEM_COLOR}[system]{RESET} Go lint completed successfully")
+            log_system("Go lint completed successfully")
         except subprocess.CalledProcessError as e:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} Go lint failed with exit code {e.returncode}"
-            )
+            log_simple_error(f"Go lint failed with exit code {e.returncode}")
             sys.exit(e.returncode)
         except FileNotFoundError:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} make command not found or Makefile doesn't exist in apps/go-app"
-            )
+            log_simple_error("make command not found or Makefile doesn't exist in apps/go-app")
             sys.exit(1)
     elif args.subcommand == "bun":
-        print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Running Bun linter...{RESET}")
+        log_system(f"{BOLD}Running Bun linter...{RESET}")
         try:
             result = subprocess.run(["bun", "lint"], cwd="apps/next-app", check=True)
-            print(f"{SYSTEM_COLOR}[system]{RESET} Bun lint completed successfully")
+            log_system("Bun lint completed successfully")
         except subprocess.CalledProcessError as e:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} Bun lint failed with exit code {e.returncode}"
-            )
+            log_simple_error(f"Bun lint failed with exit code {e.returncode}")
             sys.exit(e.returncode)
         except FileNotFoundError:
-            print(
-                f"{ERROR_COLOR}[error]{RESET} bun command not found or lint script doesn't exist in apps/next-app"
-            )
+            log_simple_error("bun command not found or lint script doesn't exist in apps/next-app")
             sys.exit(1)
     else:
-        print(f"{ERROR_COLOR}[error]{RESET} Please specify a linter: go or bun")
+        log_simple_error("Please specify a linter: go or bun")
         sys.exit(1)
 
 
@@ -181,69 +151,69 @@ def run_init():
     import subprocess
     import os
 
-    print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Initializing repository...{RESET}")
+    log_system(f"{BOLD}Initializing repository...{RESET}")
 
     # Change to the go-app directory
     go_app_dir = "apps/go-app"
 
     # Run go mod tidy
-    print(f"{SYSTEM_COLOR}[system]{RESET} Running go mod tidy...")
+    log_system("Running go mod tidy...")
     try:
         result = subprocess.run(["go", "mod", "tidy"], cwd=go_app_dir, check=True)
-        print(f"{SYSTEM_COLOR}[system]{RESET} go mod tidy completed successfully")
+        log_system("go mod tidy completed successfully")
     except subprocess.CalledProcessError as e:
-        print(f"{ERROR_COLOR}[error]{RESET} go mod tidy failed with exit code {e.returncode}")
+        log_simple_error(f"go mod tidy failed with exit code {e.returncode}")
         sys.exit(e.returncode)
     except FileNotFoundError:
-        print(f"{ERROR_COLOR}[error]{RESET} go command not found. Please install Go.")
+        log_simple_error("go command not found. Please install Go.")
         sys.exit(1)
 
     # Install swag
-    print(f"{SYSTEM_COLOR}[system]{RESET} Installing swag...")
+    log_system("Installing swag...")
     try:
         result = subprocess.run(["go", "install", "github.com/swaggo/swag/cmd/swag@latest"], check=True)
-        print(f"{SYSTEM_COLOR}[system]{RESET} Swag installed successfully")
+        log_system("Swag installed successfully")
     except subprocess.CalledProcessError as e:
-        print(f"{ERROR_COLOR}[error]{RESET} Swag installation failed with exit code {e.returncode}")
+        log_simple_error(f"Swag installation failed with exit code {e.returncode}")
         sys.exit(e.returncode)
     except FileNotFoundError:
-        print(f"{ERROR_COLOR}[error]{RESET} go command not found. Please install Go.")
+        log_simple_error("go command not found. Please install Go.")
         sys.exit(1)
 
     # Run swag init
-    print(f"{SYSTEM_COLOR}[system]{RESET} Running swag init...")
+    log_system("Running swag init...")
     try:
         result = subprocess.run(["swag", "init", "-g", "cmd/api/main.go"], cwd=go_app_dir, check=True)
-        print(f"{SYSTEM_COLOR}[system]{RESET} Swag init completed successfully")
+        log_system("Swag init completed successfully")
     except subprocess.CalledProcessError as e:
-        print(f"{ERROR_COLOR}[error]{RESET} Swag init failed with exit code {e.returncode}")
+        log_simple_error(f"Swag init failed with exit code {e.returncode}")
         sys.exit(e.returncode)
     except FileNotFoundError:
-        print(f"{ERROR_COLOR}[error]{RESET} swag command not found. Make sure it's properly installed.")
+        log_simple_error("swag command not found. Make sure it's properly installed.")
         sys.exit(1)
 
     # Install air
-    print(f"{SYSTEM_COLOR}[system]{RESET} Installing air...")
+    log_system("Installing air...")
     try:
         result = subprocess.run(["go", "install", "github.com/air-verse/air@latest"], check=True)
-        print(f"{SYSTEM_COLOR}[system]{RESET} Air installed successfully")
+        log_system("Air installed successfully")
     except subprocess.CalledProcessError as e:
-        print(f"{ERROR_COLOR}[error]{RESET} Air installation failed with exit code {e.returncode}")
+        log_simple_error(f"Air installation failed with exit code {e.returncode}")
         sys.exit(e.returncode)
     except FileNotFoundError:
-        print(f"{ERROR_COLOR}[error]{RESET} go command not found. Please install Go.")
+        log_simple_error("go command not found. Please install Go.")
         sys.exit(1)
 
     # Run bun install
-    print(f"{SYSTEM_COLOR}[system]{RESET} Running bun install...")
+    log_system("Running bun install...")
     try:
         result = subprocess.run(["bun", "install"], cwd="apps/next-app", check=True)
-        print(f"{SYSTEM_COLOR}[system]{RESET} Bun install completed successfully")
+        log_system("Bun install completed successfully")
     except subprocess.CalledProcessError as e:
-        print(f"{ERROR_COLOR}[error]{RESET} Bun install failed with exit code {e.returncode}")
+        log_simple_error(f"Bun install failed with exit code {e.returncode}")
         sys.exit(e.returncode)
     except FileNotFoundError:
-        print(f"{ERROR_COLOR}[error]{RESET} bun command not found. Please install Bun.")
+        log_simple_error("bun command not found. Please install Bun.")
         sys.exit(1)
 
-    print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Repository initialization completed successfully!{RESET}")
+    log_system(f"{BOLD}Repository initialization completed successfully!{RESET}")

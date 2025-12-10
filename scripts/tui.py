@@ -13,16 +13,16 @@ import time
 import threading
 from typing import Optional, Dict, List
 
-
-# ANSI Color Codes
-RESET = "\033[0m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-GO_COLOR = "\033[38;5;81m"
-NEXT_COLOR = "\033[38;5;120m"
-SYSTEM_COLOR = "\033[38;5;214m"
-ERROR_COLOR = "\033[38;5;196m"
-TIME_COLOR = "\033[38;5;244m"
+from scripts.loggers import (
+    log_system,
+    SYSTEM_COLOR,
+    ERROR_COLOR,
+    BOLD,
+    RESET,
+    DIM,
+    GO_COLOR,
+    NEXT_COLOR,
+)
 
 
 class TUI:
@@ -31,22 +31,20 @@ class TUI:
     def __init__(self, go_enabled=True, next_enabled=True, service_manager_class=None):
         if service_manager_class is None:
             from scripts.service_manager import ServiceManager
+
             self.service_manager_class = ServiceManager
         else:
             self.service_manager_class = service_manager_class
 
         # Parse .env file with variable expansion
         from scripts.env_parser import load_dotenv
+
         self.parsed_env = load_dotenv(".env")
 
         if self.parsed_env:
-            print(
-                f"{SYSTEM_COLOR}[system]{RESET} {DIM}Loaded {len(self.parsed_env)} variables from .env{RESET}"
-            )
+            log_system(f"{DIM}Loaded {len(self.parsed_env)} variables from .env{RESET}")
         else:
-            print(
-                f"{SYSTEM_COLOR}[system]{RESET} {DIM}No .env file found or empty{RESET}"
-            )
+            log_system(f"{DIM}No .env file found or empty{RESET}")
 
         # Create services based on arguments
         self.services = {}
@@ -176,10 +174,10 @@ class TUI:
 
     def restart_all(self) -> None:
         """Restart both services."""
-        print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Restarting all services...{RESET}")
+        log_system(f"{BOLD}Restarting all services...{RESET}")
         for service in self.services.values():
             service.restart()
-        print(f"{SYSTEM_COLOR}[system]{RESET} {DIM}All services restarted{RESET}")
+        log_system(f"{DIM}All services restarted{RESET}")
         sys.stdout.flush()
 
     def cleanup(self) -> None:
@@ -189,7 +187,7 @@ class TUI:
         self.shutting_down = True
 
         print()
-        print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Shutting down...{RESET}")
+        log_system(f"{BOLD}Shutting down...{RESET}")
 
         for service in self.services.values():
             service.stop()
@@ -197,9 +195,7 @@ class TUI:
         self.restore_terminal()
         time.sleep(0.1)  # Ensure terminal is fully restored
 
-        print(
-            f"{SYSTEM_COLOR}[system]{RESET} {DIM}All services stopped. Goodbye!{RESET}"
-        )
+        log_system(f"{DIM}All services stopped. Goodbye!{RESET}")
         sys.stdout.flush()
 
     def run(self) -> None:
@@ -217,7 +213,7 @@ class TUI:
         print("\033[2J\033[H")  # Clear screen
         self.print_header()
 
-        print(f"{SYSTEM_COLOR}[system]{RESET} {BOLD}Starting services...{RESET}")
+        log_system(f"{BOLD}Starting services...{RESET}")
         for service in self.services.values():
             service.start()
 
@@ -231,14 +227,20 @@ class TUI:
                         if service.process.poll() is not None:
                             # Process has stopped unexpectedly, show recent logs
                             if service.recent_logs:
-                                print(f"{ERROR_COLOR}[{service.name}]{RESET} Recent logs before exit:")
+                                print(
+                                    f"{ERROR_COLOR}[{service.name}]{RESET} Recent logs before exit:"
+                                )
                                 for log_line in service.recent_logs:
-                                    print(f"{ERROR_COLOR}[{service.name}]{RESET} {log_line}")
+                                    print(
+                                        f"{ERROR_COLOR}[{service.name}]{RESET} {log_line}"
+                                    )
 
                             service.status = "stopped"
                             exit_code = service.process.returncode
-                            print(
-                                f"{ERROR_COLOR}[system]{RESET} {service.name} stopped unexpectedly (exit code: {exit_code})"
+                            from scripts.loggers import log_simple_error
+
+                            log_simple_error(
+                                f"{service.name} stopped unexpectedly (exit code: {exit_code})"
                             )
 
                 time.sleep(0.1)
