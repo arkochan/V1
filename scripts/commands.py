@@ -71,7 +71,7 @@ def run_migrate(args):
         log_system(f"{BOLD}Running migration create: {' '.join(cmd)}{RESET}")
 
         try:
-            result = subprocess.run(cmd, check=True)
+            subprocess.run(cmd, check=True)
             log_system("Migration created successfully")
         except subprocess.CalledProcessError as e:
             log_simple_error(f"Migration create failed with exit code {e.returncode}")
@@ -106,7 +106,7 @@ def run_migrate(args):
         log_system(f"{BOLD}Running migration: {' '.join(cmd)}{RESET}")
 
         try:
-            result = subprocess.run(cmd, cwd=migrations_source, check=True)
+            subprocess.run(cmd, cwd=migrations_source, check=True)
             log_system("Migration completed successfully")
         except subprocess.CalledProcessError as e:
             log_simple_error(f"Migration failed with exit code {e.returncode}")
@@ -121,7 +121,7 @@ def run_lint(args):
     if args.subcommand == "go":
         log_system(f"{BOLD}Running Go linter...{RESET}")
         try:
-            result = subprocess.run(["make", "lint"], cwd="apps/go-app", check=True)
+            subprocess.run(["make", "lint"], cwd="apps/go-app", check=True)
             log_system("Go lint completed successfully")
         except subprocess.CalledProcessError as e:
             log_simple_error(f"Go lint failed with exit code {e.returncode}")
@@ -132,7 +132,7 @@ def run_lint(args):
     elif args.subcommand == "bun":
         log_system(f"{BOLD}Running Bun linter...{RESET}")
         try:
-            result = subprocess.run(["bun", "lint"], cwd="apps/next-app", check=True)
+            subprocess.run(["bun", "lint"], cwd="apps/next-app", check=True)
             log_system("Bun lint completed successfully")
         except subprocess.CalledProcessError as e:
             log_simple_error(f"Bun lint failed with exit code {e.returncode}")
@@ -157,7 +157,7 @@ def run_init():
     # Run go mod tidy
     log_system("Running go mod tidy...")
     try:
-        result = subprocess.run(["go", "mod", "tidy"], cwd=go_app_dir, check=True)
+        subprocess.run(["go", "mod", "tidy"], cwd=go_app_dir, check=True)
         log_system("go mod tidy completed successfully")
     except subprocess.CalledProcessError as e:
         log_simple_error(f"go mod tidy failed with exit code {e.returncode}")
@@ -169,7 +169,7 @@ def run_init():
     # Install swag
     log_system("Installing swag...")
     try:
-        result = subprocess.run(["go", "install", "github.com/swaggo/swag/cmd/swag@latest"], check=True)
+        subprocess.run(["go", "install", "github.com/swaggo/swag/cmd/swag@latest"], check=True)
         log_system("Swag installed successfully")
     except subprocess.CalledProcessError as e:
         log_simple_error(f"Swag installation failed with exit code {e.returncode}")
@@ -181,7 +181,7 @@ def run_init():
     # Run swag init
     log_system("Running swag init...")
     try:
-        result = subprocess.run(["swag", "init", "-g", "cmd/api/main.go"], cwd=go_app_dir, check=True)
+        subprocess.run(["swag", "init", "-g", "cmd/api/main.go"], cwd=go_app_dir, check=True)
         log_system("Swag init completed successfully")
     except subprocess.CalledProcessError as e:
         log_simple_error(f"Swag init failed with exit code {e.returncode}")
@@ -193,7 +193,7 @@ def run_init():
     # Install air
     log_system("Installing air...")
     try:
-        result = subprocess.run(["go", "install", "github.com/air-verse/air@latest"], check=True)
+        subprocess.run(["go", "install", "github.com/air-verse/air@latest"], check=True)
         log_system("Air installed successfully")
     except subprocess.CalledProcessError as e:
         log_simple_error(f"Air installation failed with exit code {e.returncode}")
@@ -205,7 +205,7 @@ def run_init():
     # Run bun install
     log_system("Running bun install...")
     try:
-        result = subprocess.run(["bun", "install"], cwd="apps/next-app", check=True)
+        subprocess.run(["bun", "install"], cwd="apps/next-app", check=True)
         log_system("Bun install completed successfully")
     except subprocess.CalledProcessError as e:
         log_simple_error(f"Bun install failed with exit code {e.returncode}")

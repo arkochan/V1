@@ -96,8 +96,8 @@ def main():
     )
 
     # Add subcommands for lint
-    lint_go = lint_subparsers.add_parser("go", help="Run Go linter")
-    lint_bun = lint_subparsers.add_parser("bun", help="Run Bun linter")
+    lint_subparsers.add_parser("go", help="Run Go linter")
+    lint_subparsers.add_parser("bun", help="Run Bun linter")
 
     # Init command
     subparsers.add_parser("init", help="Initialize the repository with dependencies and tools")
