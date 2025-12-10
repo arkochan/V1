@@ -229,9 +229,16 @@ class TUI:
                 for name, service in self.services.items():
                     if service.status == "running" and service.process:
                         if service.process.poll() is not None:
+                            # Process has stopped unexpectedly, show recent logs
+                            if service.recent_logs:
+                                print(f"{ERROR_COLOR}[{service.name}]{RESET} Recent logs before exit:")
+                                for log_line in service.recent_logs:
+                                    print(f"{ERROR_COLOR}[{service.name}]{RESET} {log_line}")
+
                             service.status = "stopped"
+                            exit_code = service.process.returncode
                             print(
-                                f"{ERROR_COLOR}[system]{RESET} {service.name} stopped unexpectedly"
+                                f"{ERROR_COLOR}[system]{RESET} {service.name} stopped unexpectedly (exit code: {exit_code})"
                             )
 
                 time.sleep(0.1)

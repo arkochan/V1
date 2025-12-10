@@ -53,42 +53,7 @@ class ServiceManager:
             env = os.environ.copy()
             env.update(self.env)
 
-            # First, do a quick check with a blocking run to catch startup errors
-            try:
-                startup_check = subprocess.run(
-                    self.cmd,
-                    cwd=self.cwd,
-                    env=env,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    timeout=2,  # Short timeout to catch immediate failures
-                )
-                if startup_check.returncode != 0:
-                    # Command fails immediately
-                    self.status = "stopped"
-                    self._print_error(
-                        f"{self.name} failed to start (exit code: {startup_check.returncode})"
-                    )
-                    print(f"{ERROR_COLOR}[{self.name}]{RESET} Startup output:")
-                    for line in startup_check.stdout.strip().split("\n"):
-                        if line.strip():
-                            print(f"{ERROR_COLOR}[{self.name}]{RESET} {line}")
-                    return False
-            except subprocess.TimeoutExpired:
-                # This means the command started successfully and is still running after 2s
-                # This is expected for long-running services
-                pass
-            except FileNotFoundError as e:
-                self.status = "stopped"
-                self._print_error(f"Command not found: {self.cmd[0]} - {e}")
-                return False
-            except Exception as e:
-                self.status = "stopped"
-                self._print_error(f"Error during startup check: {e}")
-                return False
-
-            # Now start the actual long-running process
+            # Start the actual long-running process directly (no initial check to avoid double execution)
             try:
                 self.process = subprocess.Popen(
                     self.cmd,
@@ -100,17 +65,21 @@ class ServiceManager:
                     start_new_session=True,
                 )
                 self.pid = self.process.pid
+
+                # Start log forwarding thread immediately to capture all output
+                thread = threading.Thread(target=self._log_forwarder, daemon=True)
+                thread.start()
+
+                # Wait a moment to see if process stays alive
                 time.sleep(2)
 
                 if self.process.poll() is None:
                     self.status = "running"
                     self._print_status(f"{self.name} started (PID: {self.pid})")
-
-                    # Start log forwarding thread
-                    thread = threading.Thread(target=self._log_forwarder, daemon=True)
-                    thread.start()
                     return True
                 else:
+                    # Wait briefly to let log forwarder process any remaining output
+                    time.sleep(0.5)
                     self.status = "stopped"
                     exit_code = self.process.returncode
                     self._print_error(
@@ -118,6 +87,10 @@ class ServiceManager:
                     )
                     return False
 
+            except FileNotFoundError as e:
+                self.status = "stopped"
+                self._print_error(f"Command not found: {self.cmd[0]} - {e}")
+                return False
             except Exception as e:
                 self.status = "stopped"
                 self._print_error(f"Error starting {self.name}: {e}")
@@ -186,13 +159,19 @@ class ServiceManager:
             return
 
         for line in iter(self.process.stdout.readline, ""):
-            if line and not self.process.poll():
+            if line:  # Remove the poll() check to capture logs even after process exits
                 timestamp = datetime.datetime.now().strftime("%H:%M:%S")
                 gutter = "[go]  " if self.name == "Go" else "[next]"
                 print(
                     f"{TIME_COLOR}{timestamp}{RESET} {self.color}{gutter}{RESET} {line.rstrip()}"
                 )
                 sys.stdout.flush()
+
+        # After exiting the loop, check if process exited with error and print any remaining info
+        if self.process and self.process.poll() is not None and self.process.returncode != 0:
+            self._print_error(
+                f"{self.name} exited with code {self.process.returncode}"
+            )
 
     def _print_status(self, msg: str) -> None:
         """Print system status message."""
