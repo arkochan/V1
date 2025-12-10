@@ -5,12 +5,9 @@ Provides a terminal UI for managing services with keyboard shortcuts.
 No external dependencies - uses only Python standard library.
 """
 
-import os
 import sys
-import signal
 import time
 import argparse
-from typing import Optional
 
 
 def main():
@@ -153,7 +150,7 @@ def main():
                             log_simple_error("Go service stopped unexpectedly")
                             break
                 except KeyboardInterrupt:
-                    print(f"\n", end="")
+                    print("\n", end="")
                     log_system(f"{BOLD}Stopping Go service...{RESET}")
                     go_service.stop()
                     log_system(f"{DIM}Go service stopped.{RESET}")
@@ -188,7 +185,7 @@ def main():
                             log_simple_error("Next.js service stopped unexpectedly")
                             break
                 except KeyboardInterrupt:
-                    print(f"\n", end="")
+                    print("\n", end="")
                     log_system(f"{BOLD}Stopping Next.js service...{RESET}")
                     next_service.stop()
                     log_system(f"{DIM}Next.js service stopped.{RESET}")

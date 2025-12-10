@@ -5,9 +5,8 @@ import time
 import threading
 import subprocess
 from typing import Optional, Dict, List
-import datetime
 
-from scripts.loggers import log_system, log_error, log_service_output, TIME_COLOR, RESET, GO_COLOR, NEXT_COLOR
+from scripts.loggers import log_system, log_error, log_service_output, GO_COLOR, NEXT_COLOR
 
 
 class ServiceManager:

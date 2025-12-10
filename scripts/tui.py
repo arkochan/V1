@@ -3,15 +3,12 @@ Terminal User Interface module.
 Provides a terminal UI for managing services with keyboard shortcuts.
 """
 
-import os
 import sys
 import select
 import termios
 import tty
 import signal
 import time
-import threading
-from typing import Optional, Dict, List
 
 from scripts.loggers import (
     log_system,

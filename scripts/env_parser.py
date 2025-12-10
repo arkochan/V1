@@ -5,7 +5,7 @@ Parses .env files with variable expansion support.
 
 import os
 import re
-from typing import Dict, Optional
+from typing import Dict
 
 
 # ANSI Color Codes

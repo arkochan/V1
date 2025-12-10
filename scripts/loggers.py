@@ -7,7 +7,6 @@ and timestamps similar to Go and Next.js applications.
 
 import datetime
 import sys
-from typing import Optional
 
 
 # ANSI Color Codes

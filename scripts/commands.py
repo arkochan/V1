@@ -6,9 +6,8 @@ Contains Docker, migration, and lint command implementations.
 import os
 import sys
 import subprocess
-from typing import Any
 
-from scripts.loggers import log_system, log_simple_error, SYSTEM_COLOR, ERROR_COLOR, BOLD, RESET
+from scripts.loggers import log_system, log_simple_error, BOLD, RESET
 
 
 # Docker command functions
@@ -149,7 +148,6 @@ def run_lint(args):
 def run_init():
     """Initialize the repository with all necessary dependencies and tools."""
     import subprocess
-    import os
 
     log_system(f"{BOLD}Initializing repository...{RESET}")
 
